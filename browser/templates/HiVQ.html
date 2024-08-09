@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>|HiVQ|Demo</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='./lib/css/ol.css')}}" type="text/css">
+    <link rel="stylesheet" href="{{url_for('static', filename='./lib/css/bootstrap.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='./lib/css/bootstrap-colorpicker.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='./lib/css/mapDesign.css')}}">
+    <script src="{{url_for('static', filename='./lib/jquery.js')}}"></script>
+    <script src="{{url_for('static', filename='./lib/bootstrap-colorpicker.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='./lib/ol.js')}}"></script>
+    <script src="{{url_for('static', filename='./lib/echarts.min.js')}}"></script>
+  </head>
+
+  
+  <body>
+    <!-- interactive panel -->
+    <div class="action-col">
+
+      <div class="data-col">
+        <label>Dataset</label>
+        <select id="layers" name="layers">
+          <option value="point">Point Dataset</option>
+          <option value="line">LineString Dataset</option>
+          <option value="polygon">Polygon Dataset</option>
+        </select>
+        <label>Meta data</label>
+        <table class="meta-table">
+          <tr><td align="center">Type</td><td align="center" id="shptype"></td></tr>
+          <tr><td align="center">SRS</td><td align="center" id="srs"></td></tr>
+          <tr><td align="center">Record</td><td align="center" id="f-num"></td></tr>
+          <tr><td align="center">Range</td><td align="center" id="data-range"></td></tr>
+          <tr>
+            <td align="center">Field</td>
+            <td align="center" id="attri">
+              <select id="fields"></select>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="style-col">
+        <label>Layer Style</label>
+        
+        <select class="style-types" id="style-types" name="style-types">
+          <option id="single" value="single">Scatter Plot</option>
+          <option id="classified" value="classified">Classified / Filter Plot</option>
+          <option id="ruled" value="ruled">Rule-based Plot</option>
+          <option id="heat" value="heat">Heat Plot</option>
+        </select>
+        
+
+        <div class="style-setting">
+
+          <div class="single-style">
+            <label>Color</label>
+            <input id="LayerCP" type="text" class="form-control"/>
+            <label>Width</label>
+            <input class="width" id="width" type="range" min="0" max="8" step="1" value="2"/>
+          </div>
+
+          <div class="polygon-single-style">
+            <label>Edge Color</label>
+            <input id="e-LayerCP" type="text" class="form-control"/>
+            <label>Edge Width</label>
+            <input class="width" id="p-width" type="range" min="0" max="8" step="1" value="1"/>
+            <label>Filling Color</label>
+            <input id="f-LayerCP" type="text" class="form-control"/>
+          </div>
+
+
+          <div class="classified-style">
+            <label>Attribution</label>
+            <select id="attri_names" name="attri_names"></select>
+            <label>Item</label>
+            <select id="items" name="items"></select>
+            <label>Color</label>
+            <input id="LayerCP2" type="text" class="form-control"/>
+            <label>Width</label>
+            <input class="width" id="width2" type="range" min="0" max="8" step="1" value="2"/>
+            <button id='add-style' type='button'>＋</button>
+            <button id='delete-style' type='button'>-</button>
+            <button id='remove-style' type='button'>clear</button>
+          </div>
+
+          <div class="ruled-style">
+            <label>Attribution</label>
+            <select id="attri_names3" name="attri_names"></select>
+            <label>Filter  | = | != | > | >= | &lt | &lt= |</label>
+            <input class="filter" id="filter" type="text"/>
+            <label>Color</label>
+            <input id="LayerCP3" type="text" class="form-control"/>
+            <label>Width</label>
+            <input class="width" id="width3" type="range" min="0" max="8" step="1" value="2"/>
+            
+            <button id='add-style3' type='button'>＋</button>
+            <button id='delete-style3' type='button'>-</button>
+            <button id='remove-style3' type='button'>clear</button>
+          </div>
+
+          <div class="heat-style">
+            <label>Gradient</label>
+            <select id="gradient" name="gradient">
+              <option value="Jet">Jet</option>
+              <option value="Blues">Blues</option>
+              <option value="Reds">Reds</option>
+              <option value="YlorRd">YlorRd</option>
+              <option value="Magma">Magma</option>
+            </select>
+            <label>Radius</label>
+            <input class="width" id="radius" type="range" min="2" max="10" step="1" value="5"/>
+          </div>
+
+        </div>
+
+        <div class="script-col">
+          <label>Style Scripts</label>
+          <textarea id="script" rows="5" cols="5"></textarea>
+        </div>
+        
+        <button id='enter' type='button'>Enter</button>
+        
+
+      </div>
+      
+    </div>
+
+    <!-- map panel -->
+    <div id="map" class="map"></div>
+    
+
+    <!-- search panel -->
+    <div class="analysis-col">
+      <div class="search-col">
+        <label>Spatial Range Search</label>
+        <div class="bbox-setting">
+          <label>BBox Setting</label>
+          <table class="range-table">
+            <tr>
+              <td align="center"></td>
+              <td align="center">Lon</td>
+              <td align="center">Lat</td>
+            </tr>
+            <tr>
+              <td align="center">MinCorner</td>
+              <td align="center"><input id="minLon" type="text" value="73.49"/></td>
+              <td align="center"><input id="minLat" type="text" value="3.85"/></td>
+            </tr>
+            <tr>
+              <td align="center">MaxCorner</td>
+              <td align="center" id=""><input id="maxLon" type="text" value="135.03"/></td>
+              <td align="center" id=""><input id="maxLat" type="text" value="53.55"/></td>
+            </tr>
+          </table>
+          <button id='enter4' type='button'>select BBox in map</button>
+        </div>
+        <button id='enter3' type='button'>Search</button>
+      </div>
+      <div class="statistic-col">
+        <label>Statistic Results</label>
+        <div class="statistic_chart" id="statistic_chart"></div>
+      </div>
+    </div>
+    
+    
+    
+
+    <script>
+      var L = 20037508.34;
+
+      var cp = $("#LayerCP").colorpicker({
+        format: 'rgb',
+        color: 'rgba(227,39,39,1)'
+      });
+
+      var cp2 = $("#LayerCP2").colorpicker({
+        format: 'rgb',
+        color: 'rgba(227,39,39,1)'
+      });
+
+      var cp3 = $("#LayerCP3").colorpicker({
+        format: 'rgb',
+        color: 'rgba(227,39,39,1)'
+      });
+      
+      var cp4 = $("#LayerCP4").colorpicker({
+        format: 'rgb',
+        color: 'rgba(39,227,102,0.6)'
+      });
+
+      var edge_cp = $("#e-LayerCP").colorpicker({
+        format: 'rgb',
+        color: 'rgba(227,39,39,1)'
+      });
+
+      var fill_cp = $("#f-LayerCP").colorpicker({
+        format: 'rgb',
+        color: 'rgba(39,227,102,0.6)'
+      });
+
+      $(".polygon-single-style").hide();
+      $(".classified-style").hide();
+      $(".ruled-style").hide();
+      $(".heat-style").hide();
+      $(".script-col").hide();
+
+      var Layers = document.getElementById("layers");
+      var Enter = document.getElementById('enter');
+      var Enter2 = document.getElementById('enter2');
+      var Enter3 = document.getElementById('enter3');
+      var Enter4 = document.getElementById('enter4');
+      var Attri = document.getElementById('attri_names');
+      var Attri3 = document.getElementById('attri_names3');
+      var Items = document.getElementById("items");
+      var Filter = document.getElementById('filter');
+      var Addstyle = document.getElementById('add-style');
+      var Addstyle3 = document.getElementById('add-style3');
+      var Deletestyle = document.getElementById('delete-style');
+      var Deletestyle3 = document.getElementById('delete-style3');
+      var Removestyle = document.getElementById('remove-style');
+      var Removestyle3 = document.getElementById('remove-style3');
+      var S_tyles = document.getElementById('style-types');
+      var Scripts = document.getElementById('script');
+      var Width = document.getElementById("width");
+      var P_Width = document.getElementById("p-width");
+      var Width2 = document.getElementById('width2');
+      var Color1 = document.getElementById('LayerCP');
+      var Color2 = document.getElementById('LayerCP2');
+      var Color3 = document.getElementById('LayerCP3');
+      var E_Color = document.getElementById('e-LayerCP');
+      var F_Color = document.getElementById('f-LayerCP');
+      var shp_type = document.getElementById('shptype');
+      var shp_srs = document.getElementById('srs');
+      var f_num = document.getElementById('f-num');
+      var data_range = document.getElementById('data-range');
+      var fields = document.getElementById('fields');
+      var Radius = document.getElementById("radius");
+      var Gradient = document.getElementById("gradient");
+      var count_select = document.getElementById("count_select");
+      var statistic_Chart = echarts.init(document.getElementById("statistic_chart"));
+    
+      var popup_container = document.getElementById('popup');
+      var popup_content = document.getElementById('popup-content');
+      var popup_closer = document.getElementById('popup-closer');
+
+      Color1.style.background = cp.data('color');
+      Color2.style.background = cp2.data('color');
+      Color3.style.background = cp3.data('color');
+      E_Color.style.background = edge_cp.data('color');
+      F_Color.style.background = fill_cp.data('color');
+
+      // display the meta data
+      var meta_info = sendUrl("http://127.0.0.1:10085/HiVQ/" + Layers.value);
+      var arr = meta_info.split("/");
+      shp_type.innerText = arr[0];
+      shp_srs.innerText = arr[1];
+      f_num.innerText = arr[2];
+      data_range.innerText = arr[3];
+      var field_list = arr[4].split(",");
+      for (var i = 0; i < field_list.length-1; i++){
+        fields.options.add(new Option(field_list[i], field_list[i]));
+      }
+
+      
+
+      
+      // load the background map
+      var tile_url = 'https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia3lyaWViYW5nIiwiYSI6ImNsamdrNzFxbjA2MXczZm05bG9vbWE2eDkifQ.qECfbq6M6vUZkCAl9ixzeQ';
+      var tileSource = new ol.source.XYZ({
+        url: tile_url
+      })
+
+      var backLayer = new ol.layer.Tile({
+          source: tileSource
+      })
+
+      // load grid
+      var tile_grid = new ol.layer.Tile({
+        source: new ol.source.TileDebug({
+          projection: 'EPSG:3857',
+          tileGrid: tileSource.getTileGrid()
+        }),
+        opacity: 0.3
+      });
+
+      // the search layer
+      var box_layer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        opacity: 0.2,
+        style: new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: 'pink',
+          })
+        })
+      });
+
+      var drawBox = new ol.interaction.Draw({
+        source: box_layer.getSource(),
+        type: 'Circle',
+        geometryFunction: ol.interaction.Draw.createBox()
+      });
+
+      var feature_layer = new ol.layer.Vector({
+        source: new ol.source.Vector({}),
+        opacity: 1
+      });
+
+
+      var popup = new ol.Overlay({
+          element: popup_container,
+          autoPan: true,
+          positioning: 'bottom-center',
+          stopEvent: false,
+          autoPanAnimation: {
+              duration: 250
+          }
+      });
+
+      // create map
+      var map = new ol.Map({
+          target: 'map',
+          view: new ol.View({
+              center: ol.proj.transform([0, 0], 'EPSG:4326', 'EPSG:3857'),
+              zoom: 2,
+              maxZoom: 20,
+              minZoom: 0,
+          }),
+          interactions: ol.interaction.defaults({
+            doubleClickZoom: false,// 取消双击放大功能交互
+          })
+      });
+
+
+      map.addLayer(backLayer);
+      map.addLayer(tile_grid);
+      map.addOverlay(popup);
+
+
+      // geovisualization
+      Enter.addEventListener('click', function () {
+        var layers = Layers.value;
+        var style_type = S_tyles.value;
+        var style_desrciber = "";
+        if (style_type == "single"){
+          if (layers == "point" || layers == "line"){
+            var s_Color = cp.data('color');
+            var width = Width.value;
+            style_desrciber = style_type + "-" + s_Color._r + ',' + s_Color._g + ',' + s_Color._b + ',' +  s_Color._a + ',' + width;
+          }
+          else{
+            var e_Color = edge_cp.data('color');
+            var f_Color = fill_cp.data('color');
+            var width = P_Width.value;
+            var e_style = e_Color._r + ',' + e_Color._g + ',' + e_Color._b + ',' + e_Color._a + ',' + width;
+            var f_style = f_Color._r + ',' + f_Color._g + ',' + f_Color._b + ',' + f_Color._a;
+            style_desrciber = style_type + "-" + e_style + ',' + f_style;
+          }
+          
+          var tiles = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'http://127.0.0.1:10085/HiVQ/' + layers + '/' + style_desrciber + '/{z}/{x}/{y}.png', 
+            })
+          })
+          map.setLayers(tiles);
+          map.addLayer(backLayer);
+          map.addLayer(tile_grid);
+          map.addLayer(tiles);
+          
+          
+          
+          if (layers == "point"){
+            var pic_xItem = ["Count"];
+            var pic_yItem = [f_num.innerText];
+          }
+          else if (layers == "line"){
+            var pic_xItem = ["Count"];
+            var total_len = parseFloat(f_num.innerText.split(",")[1].split("KM")[0]);
+            var pic_yItem = [total_len.toFixed(2)];
+          }
+          else if (layers == "polygon"){
+            var pic_xItem = ["Count"];
+            var total_area = parseFloat(f_num.innerText.split(",")[1].split("KM2")[0]);
+            var pic_yItem = [total_area.toFixed(2)];
+          }
+          
+          if (layers == "point" || layers == "line"){
+            var color_list = ["rgb(" + s_Color._r + ',' + s_Color._g + ',' + s_Color._b + ")"];
+          }
+          else if (layers == "polygon"){
+            var color_list = ["rgb(" + e_Color._r + ',' + e_Color._g + ',' + e_Color._b + ")"];
+          }
+          
+          showStatisticChart(statistic_Chart, pic_xItem, pic_yItem, color_list);
+          
+        }
+        else if (style_type == "heat"){
+          var tiles = getHeatTile();
+          map.setLayers(tiles);
+          map.addLayer(backLayer);
+          map.addLayer(tile_grid);
+          map.addLayer(tiles);
+        }
+        else{
+          if (Scripts.value.length == 0){
+            map.setLayers(backLayer);
+            map.addLayer(backLayer);
+            statistic_Chart.clear();
+            alert("please input style scripts !");
+          }
+          else{
+            
+            var opts = fields.options;
+            if (style_type == "classified"){
+              showFieldStatistic(Attri);
+              for (var i = 0; i < opts.length; i++){
+                var field_info = opts[i].value.split("-");
+                var field_value = field_info[0];
+                var field_type = field_info[1];
+                field_value = field_value.replace(/\s*/g,"");
+                if (field_value == Attri.value){
+                  break;
+                }
+              }
+
+              style_desrciber += style_type + "-" + Attri.value + "-" + field_type;
+            }
+            else if (style_type == "ruled"){
+              showFieldStatistic(Attri3);
+              for (var i = 0; i < opts.length; i++){
+                var field_info = opts[i].value.split("-");
+                var field_value = field_info[0];
+                var field_type = field_info[1];
+                field_value = field_value.replace(/\s*/g,"");
+                if (field_value == Attri3.value){
+                  break;
+                }
+              }
+              style_desrciber += style_type + "-" + Attri3.value + "-" + field_type;
+            }
+
+            var arr = Scripts.value.split("\n");
+            for (var i = 0; i < arr.length; i++){
+              style_desrciber += ("-" + arr[i]);
+            }
+            
+            var tiles = new ol.layer.Tile({
+              source: new ol.source.XYZ({
+                  url: 'http://127.0.0.1:10085/HiVQ/' + layers + '/' + style_desrciber +  '/{z}/{x}/{y}.png', 
+              })
+            })
+            map.setLayers(tiles);
+            map.addLayer(backLayer);
+            map.addLayer(tiles);
+          }
+        }
+      });
+
+
+
+      // spatial serach
+      Enter3.addEventListener('click', function () {
+        box_layer.getSource().clear();
+        // map.on('singleclick', select_function);
+
+        var minLon = $('#minLon').val() * 1;
+        var maxLon = $('#maxLon').val() * 1;
+        var minLat = $('#minLat').val() * 1;
+        var maxLat = $('#maxLat').val() * 1;
+        if ((minLon >= maxLon) || (minLat >= maxLat)){
+          alert("【ERROR】Longitude/Latitude range is incorrect !");
+        }
+        else if (minLon < -180 || minLon >= 180 || maxLon <= -180 || maxLon > 180 || minLat < -90 || minLat >= 90 || maxLat <= -90 || maxLat > 90){
+          alert("【ERROR】Longitude/Latitude is out of range !");
+        }
+        else{
+          var [minX, minY] = ol.proj.transform([minLon, minLat], 'EPSG:4326', 'EPSG:3857');
+          var [maxX, maxY] = ol.proj.transform([maxLon, maxLat], 'EPSG:4326', 'EPSG:3857');
+          var box_coord = [[minX, minY], [minX, maxY], [maxX, maxY], [maxX, minY], [minX, minY]];
+          var box_source = new ol.source.Vector({
+            features: [new ol.Feature({geometry: new ol.geom.Polygon([box_coord])})]
+          });
+          box_layer.setSource(box_source);
+          
+          
+          var style_desrciber = "";
+          var style_type = S_tyles.value;
+          var shpType = Layers.value;
+          // heat: plot tile
+          if (style_type == "heat"){
+            var radius = Radius.value;
+            var gradient = Gradient.value;
+            var rangeTiles = new ol.layer.Tile({
+              source: new ol.source.XYZ({
+                tileUrlFunction: function(tileCoord){
+                  let z = tileCoord[0];
+                  let x = tileCoord[1];
+                  let y = tileCoord[2];
+                  if (ifOverlap(z, x, y, minX, minY, maxX, maxY)){
+                    var tile_resolution = L / Math.pow(2, z-1);
+                    var tile_minX = Math.floor((minX + L) / tile_resolution);
+                    var tile_maxX = Math.floor((maxX + L) / tile_resolution);
+                    var tile_minY = Math.floor((L - maxY) / tile_resolution);
+                    var tile_maxY = Math.floor((L - minY) / tile_resolution);
+
+                    style_desrciber = style_type + "-" + gradient + "-" + radius + "-" + tile_minX + "," + tile_maxX + "," + tile_minY + "," + tile_maxY;
+                    return 'http://127.0.0.1:10085/HiVQ/' + shpType + '/' + style_desrciber + '/' + minX + '/' + minY + '/' + maxX + '/' + maxY + '/' + z + '/' + x + '/' + y +'.png';
+                  }
+                }
+              })
+            })
+            popup.setPosition(undefined);
+            map.setLayers(rangeTiles);
+            map.removeInteraction(drawBox);
+            map.removeLayer(box_layer);
+            map.addLayer(backLayer);
+            map.addLayer(box_layer);
+            map.addLayer(rangeTiles);
+          }
+          // single, classified, ruled: plot tile and plot statistic results
+          else{
+            style_desrciber = getStyleDescriber();
+            var rangeTiles = new ol.layer.Tile({
+              source: new ol.source.XYZ({
+                tileUrlFunction: function(tileCoord){
+                  let z = tileCoord[0];
+                  let x = tileCoord[1];
+                  let y = tileCoord[2];
+
+                  if (ifOverlap(z, x, y, minX, minY, maxX, maxY)){
+                    return 'http://127.0.0.1:10085/HiVQ/' + shpType + '/' + style_desrciber + '/' + minX + '/' + minY + '/' + maxX + '/' + maxY + '/' + z + '/' + x + '/' + y +'.png';
+                  }
+                }
+              })
+            })
+
+            popup.setPosition(undefined);
+            map.setLayers(rangeTiles);
+            map.removeInteraction(drawBox);
+            map.removeLayer(box_layer);
+            map.addLayer(backLayer);
+            map.addLayer(box_layer);
+            map.addLayer(rangeTiles);
+
+            // show statistic chart
+            var statistic_url = "http://127.0.0.1:10085/HiVQ/rangeStatistic/" + shpType + "/" + style_desrciber + "/" + minX + "/" + minY + "/" + maxX + "/" + maxY;
+            var statistic_info = sendUrl(statistic_url);
+            var statistic_arr = statistic_info.split(",");
+            var pic_xItem = [];
+            var pic_yItem = [];
+            var color_list = [];
+
+            for (var i = 0; i < statistic_arr.length; i++){
+              var item_style_i = statistic_arr[i].split(":");
+              var item_name = item_style_i[0];
+
+              if (S_tyles.value == "ruled"){
+                item_name = item_name.replace(/%3E/g, ">");
+                item_name = item_name.replace(/%3C/g, "<");
+              }
+
+              pic_xItem.push(item_name);
+              var s_info = parseFloat(item_style_i[1]);
+              pic_yItem.push(s_info.toFixed(2));
+            }
+
+            if (S_tyles.value == "single"){
+              var s_Color = cp.data('color');
+              color_list = ["rgb(" + s_Color._r + ',' + s_Color._g + ',' + s_Color._b + ")"];
+            }
+            else{
+              var scripts = Scripts.value.split("\n");
+              for (var k = 0; k < scripts.length; k++){
+                var item_R = scripts[k].split(",")[1];
+                var item_G = scripts[k].split(",")[2];
+                var item_B = scripts[k].split(",")[3];
+                color_list.push("rgb(" + item_R + "," + item_G + "," + item_B + ")");
+              }
+            }  
+
+            showStatisticChart(statistic_Chart, pic_xItem, pic_yItem, color_list);
+          }
+        }
+      });
+
+      // select any region
+      Enter4.addEventListener('click', function () {
+        // map.un('singleclick', select_function);
+        popup.setPosition(undefined);
+        map.removeLayer(box_layer);
+        map.removeLayer(feature_layer);
+        
+
+        drawBox.on('drawstart', function () {
+          box_layer.getSource().clear();
+        });
+
+        drawBox.on('drawend', function (e) {
+          if (e.feature) {
+            var geometry = e.feature.getGeometry();
+            var [minX, minY, maxX, maxY] = geometry.getExtent();
+            var [minLon, minLat] = ol.proj.transform([minX, minY], 'EPSG:3857', 'EPSG:4326');
+            var [maxLon, maxLat] = ol.proj.transform([maxX, maxY], 'EPSG:3857', 'EPSG:4326');
+            $('#minLon').val(minLon.toFixed(4));
+            $('#maxLon').val(maxLon.toFixed(4));
+            $('#minLat').val(minLat.toFixed(4));
+            $('#maxLat').val(maxLat.toFixed(4));
+            
+            var box_coord = [[minX, minY], [minX, maxY], [maxX, maxY], [maxX, minY], [minX, minY]];
+            var box_source = new ol.source.Vector({
+              features: [new ol.Feature({geometry: new ol.geom.Polygon([box_coord])})]
+            });
+            box_layer.setSource(box_source);
+          }
+        });
+
+
+        if (S_tyles.value == "heat"){
+          var tiles = getHeatTile();
+          map.setLayers(tiles);
+          map.addLayer(backLayer);
+          map.addLayer(tiles);
+          map.addInteraction(drawBox);
+          map.addLayer(box_layer);
+        }
+        else{
+          var style_desrciber = getStyleDescriber();
+          var tiles = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'http://127.0.0.1:10085/HiVQ/' + Layers.value + '/' + style_desrciber + '/{z}/{x}/{y}.png',
+            })
+          })
+          map.addLayer(tiles);
+          map.addInteraction(drawBox);
+          map.addLayer(box_layer);
+        }
+      });
+
+      // change the data
+      Layers.addEventListener('change', function () {
+        var layers = Layers.value;
+        var meta_info = sendUrl("http://127.0.0.1:10085/HiVQ/" + layers);
+        var arr = meta_info.split("/");
+        shp_type.innerText = arr[0];
+        shp_srs.innerText = arr[1];
+
+        // if (layers == "point"){
+          f_num.innerText = arr[2];
+        // }
+        // else if (layers == "line"){
+        //   var total_info = arr[2].split(",");
+        //   f_num.innerText = arr[2].split(",")[0];
+        // }
+        
+        data_range.innerText = arr[3];
+        var field_list = arr[4].split(",");
+        fields.options.length = 0;
+        for (var i = 0; i < field_list.length-1; i++){
+          fields.options.add(new Option(field_list[i], field_list[i]));
+        }
+        showField();
+
+        if (layers == "point"){
+          var optionToHide = S_tyles.options[3];
+          optionToHide.style.display = "block";
+        }
+        else if (layers == "line" || layers == "polygon"){
+          var optionToHide = S_tyles.options[3];
+          optionToHide.style.display = "none";
+        }
+
+        if (S_tyles.value == "single"){
+          if (layers == "point" || layers == "line"){
+            $(".single-style").show();
+            $(".polygon-single-style").hide();
+          }
+          else{
+            $(".single-style").hide();
+            $(".polygon-single-style").show();
+          }
+        }
+        else if (S_tyles.value == "classified"){
+          showFieldItem();
+        }
+        else if (S_tyles.value == "ruled"){
+          Filter.value = "";
+          Scripts.value = "";
+        }
+        
+        map.setLayers(backLayer);
+        map.addLayer(backLayer);
+      });
+
+      // get the field of the attribution
+      Attri.addEventListener('change', function () {
+        showFieldItem();
+      });
+
+      Attri3.addEventListener('change', function () {
+        Filter.value = "";
+        Scripts.value = "";
+      });
+
+      
+      // add the style
+      Addstyle.addEventListener('click', function () {
+        var new_scripts = "";
+        var item_value = Items.value;
+        var color = cp2.data('color');
+        var width = document.getElementById("width2").value;
+        var item_style = item_value + ',' + color._r + ',' + color._g + ',' + color._b + ',' + color._a + ',' + width;
+        // 当为空时，直接添加
+        if (Scripts.value.length <= 0){
+          Scripts.value = item_style;
+        }
+        else{
+          var arr = Scripts.value.split("\n");
+          for (var i = 0; i < arr.length; i++) {
+            // 判断添加的值和样式是否重复
+            // 若值和样式均重复则直接返回
+            if (arr[i] == item_style){
+              new_scripts = "";
+              break;
+            }
+            // 若只是值重复则更改对应样式，若值不重复则直接添加样式
+            else{
+              var pairs = arr[i].split(",");
+              if (item_value == pairs[0]){
+                if (i == 0){
+                  new_scripts += item_style;
+                }
+                else{
+                  new_scripts += ("\n" + item_style);
+                }
+              }
+              else{
+                if (i == 0){
+                  new_scripts += arr[i];
+                }
+                else{
+                  new_scripts += ("\n" + arr[i]);
+                }
+              }
+            }
+          }
+
+          if (Scripts.value == new_scripts){
+            Scripts.value += ("\n" + item_style);
+          }
+          else{
+            if (new_scripts.length == 0){
+              alert(item_value + ": The style is repetitive !");
+              Scripts.value = Scripts.value;
+            }
+            else{
+              Scripts.value = new_scripts;
+            }
+          }
+        }
+      });
+
+      Addstyle3.addEventListener('click', function () {
+        var new_scripts = "";
+        var filter = Filter.value;
+        var color = cp3.data('color');
+        var width = document.getElementById("width3").value;
+        var filter_style = filter + ',' + color._r + ',' + color._g + ',' + color._b + ',' + color._a + ',' + width;
+        // 当为空时，直接添加
+        if (Scripts.value.length <= 0){
+          Scripts.value = filter_style;
+        }
+        else{
+          var arr = Scripts.value.split("\n");
+          for (var i = 0; i < arr.length; i++) {
+            // 判断添加的值和样式是否重复
+            // 若值和样式均重复则直接返回
+            if (arr[i] == filter_style){
+              new_scripts = "";
+              break;
+            }
+            // 若只是值重复则更改对应样式，若值不重复则直接添加样式
+            else{
+              var pairs = arr[i].split(",");
+              if (filter == pairs[0]){
+                if (i == 0){
+                  new_scripts += filter_style;
+                }
+                else{
+                  new_scripts += ("\n" + filter_style);
+                }
+              }
+              else{
+                if (i == 0){
+                  new_scripts += arr[i];
+                }
+                else{
+                  new_scripts += ("\n" + arr[i]);
+                }
+              }
+            }
+          }
+
+          if (Scripts.value == new_scripts){
+            Scripts.value += ("\n" + filter_style);
+          }
+          else{
+            if (new_scripts.length == 0){
+              alert(filter + ": The style is repetitive !");
+              Scripts.value = Scripts.value;
+            }
+            else{
+              Scripts.value = new_scripts;
+            }
+          }
+        }
+      });
+
+      // remove the style
+      Deletestyle.addEventListener('click', function () {
+        var scripts = Scripts.value.split("\n");
+        var new_scripts = "";
+        for (var i = 0; i < scripts.length; i++){
+          var single_item = scripts[i].split(",");
+          if (single_item[0] != Items.value){
+            if (new_scripts.length == 0){
+              new_scripts += scripts[i];
+            }
+            else{
+              new_scripts += ("\n" + scripts[i]);
+            }
+          }
+        }
+
+        if (new_scripts == Scripts.value){
+          alert(Items.value + ": The style is Deleted !");
+        }
+        else{
+          Scripts.value = new_scripts;
+        }
+      });
+
+      Deletestyle3.addEventListener('click', function () {
+        var scripts = Scripts.value.split("\n");
+        var new_scripts = "";
+        for (var i = 0; i < scripts.length; i++){
+          var single_item = scripts[i].split(",");
+          if (single_item[0] != Filter.value){
+            if (new_scripts.length == 0){
+              new_scripts += scripts[i];
+            }
+            else{
+              new_scripts += ("\n" + scripts[i]);
+            }
+          }
+        }
+
+        if (new_scripts == Scripts.value){
+          alert(Filter.value + ": The style is Deleted !");
+        }
+        else{
+          Scripts.value = new_scripts;
+        }
+      });
+
+      // remove all style
+      Removestyle.addEventListener('click', function () {
+        Scripts.value = "";
+      });
+
+      Removestyle3.addEventListener('click', function () {
+        Scripts.value = "";
+      });
+
+      // change the style panel
+      S_tyles.addEventListener('change', function () {
+        var style_type = S_tyles.value;
+        if (style_type == "single"){
+          $(".script-col").hide();
+          $(".classified-style").hide();
+          $(".ruled-style").hide();
+          $(".heat-style").hide();
+          if (Layers.value == "point" || Layers.value == "line"){
+            $(".single-style").show();
+            $(".polygon-single-style").hide();
+          }
+          else if ((Layers.value == "polygon")){
+            $(".single-style").hide();
+            $(".polygon-single-style").show();
+          }
+          
+          statistic_Chart.clear();
+        }
+        else if (style_type == "heat"){
+          $(".single-style").hide();
+          $(".polygon-single-style").hide();
+          $(".classified-style").hide();
+          $(".ruled-style").hide();
+          $(".script-col").hide();
+          $(".heat-style").show();
+
+          statistic_Chart.clear();
+        }
+        else if (style_type == "classified"){
+          $(".single-style").hide();
+          $(".polygon-single-style").hide();
+          $(".ruled-style").hide();
+          $(".heat-style").hide();
+          $(".classified-style").show();
+          $(".script-col").show();
+          showField();
+          showFieldItem();
+        }
+        else if (style_type == "ruled"){
+          $(".single-style").hide();
+          $(".polygon-single-style").hide();
+          $(".classified-style").hide();
+          $(".heat-style").hide();
+          $(".ruled-style").show();
+          $(".script-col").show();
+          Scripts.value = "";
+          showField();
+          statistic_Chart.clear();
+        }
+        map.setLayers(backLayer);
+        map.addLayer(backLayer);
+      });
+
+
+      Color1.addEventListener('blur', function () {
+        Color1.style.background = cp.data('color');      
+      });
+
+      Color2.addEventListener('blur', function () {
+        Color2.style.background = cp2.data('color');      
+      });
+
+      Color3.addEventListener('blur', function () {
+        Color3.style.background = cp3.data('color');      
+      });
+
+      E_Color.addEventListener('blur', function () {
+        E_Color.style.background = edge_cp.data('color');      
+      });
+
+      F_Color.addEventListener('blur', function () {
+        F_Color.style.background = fill_cp.data('color');      
+      });
+      
+
+      function showField(){
+        Attri.options.length = 0;
+        Attri3.options.length = 0;
+        var opts = fields.options;
+        for (var i = 0; i < opts.length; i++){
+          var field_info = opts[i].value.split("-");
+          var field_value = field_info[0];
+          field_value = field_value.replace(/\s*/g,"");
+          Attri.options.add(new Option(field_value, field_value));
+          Attri3.options.add(new Option(field_value, field_value));
+        }
+      }
+
+      function showFieldItem(){
+        var attri_name = Attri.value;
+        var opts = fields.options;
+        var field_type = "";
+        for (var i = 0; i < opts.length; i++){
+          var field_info = opts[i].value.split("-");
+          var field_value = field_info[0].replace(/\s*/g,"");
+          if (field_value == attri_name){
+            // if (field_info[1] == "string"){
+              field_type = field_info[1];
+              break;
+            // }
+          }
+        }
+
+        var item_info = sendUrl("http://127.0.0.1:10085/HiVQ/" + Layers.value + "/" + attri_name + "/" + field_type);
+        var items = item_info.split(",");
+        
+        Scripts.value = "";
+        // var statistic_str = "";
+        Items.options.length = 0;
+        for (var j = 0; j < items.length-1; j+=2){
+          Items.options.add(new Option(items[j], items[j]));
+
+          var r = Math.floor(Math.random()*256);
+          var g = Math.floor(Math.random()*256);
+          var b = Math.floor(Math.random()*256);
+          var ad = (0.1*(Math.floor(Math.random() * (10 - 5)) + 5)).toFixed(1);
+          var w = Math.floor(Math.random() * (3 - 1)) + 1;
+          var style = r + "," + g + "," + b + "," + ad + "," + w;
+          if (j == 0){
+            Scripts.value += (items[0] + "," + style);
+            // statistic_str += (items[0] + "," + r + "," + g + "," + b + "," + ad + "," + items[j+1]);
+          }
+          else{
+            Scripts.value += ("\n" + items[j] + "," + style);
+            // statistic_str += ("-" + items[j] + "," + r + "," + g + "," + b + "," + ad + "," + items[j+1]);
+          }
+        }
+
+        // if (statistic_str == ""){
+        //   statistic_img.src = "http://127.0.0.1:10085/HiVision-V3/statistic/" + Layers.value + "/null/0.png";
+        // }
+        // else{
+        //   statistic_img.src = "http://127.0.0.1:10085/HiVision-V3/statistic/" + Layers.value + "/" + statistic_str + "/0.png";
+        // }
+        
+        statistic_Chart.clear();
+      }
+
+      function showFieldStatistic(Attri){
+        var attri_name = Attri.value;
+        var opts = fields.options;
+        for (var i = 0; i < opts.length; i++){
+          var field_info = opts[i].value.split("-");
+          var field_value = field_info[0];
+          var field_type = field_info[1];
+          field_value = field_value.replace(/\s*/g,"");
+          if (field_value == attri_name){
+            break;
+          }
+        }
+
+        var item_info = sendUrl("http://127.0.0.1:10085/HiVQ/" + Layers.value + "/" + attri_name + "/" + field_type);
+        var items = item_info.split(",");
+        var scripts = Scripts.value.split("\n");
+
+        var item_names = [];
+        var item_nums = [];
+        for (var j = 0; j < items.length-1; j+=2){
+          item_names.push(items[j]);
+          item_nums.push(items[j+1]);
+        }
+
+        var pic_xItem = []; 
+        var pic_yItem = [];
+        var color_list = [];
+        if (S_tyles.value == "classified"){
+          for (var k = 0; k < scripts.length; k++){
+            var item_name = scripts[k].split(",")[0];
+            var item_R = scripts[k].split(",")[1];
+            var item_G = scripts[k].split(",")[2];
+            var item_B = scripts[k].split(",")[3];
+            var name_index = item_names.indexOf(item_name);
+            pic_xItem.push(item_name);
+            pic_yItem.push(item_nums[name_index]);
+            color_list.push("rgb(" + item_R + "," + item_G + "," + item_B + ")");
+          }
+        }
+        else if (S_tyles.value == "ruled"){
+          for (var k = 0; k < scripts.length; k++){
+            var item_num = 0;
+            var item_rule = scripts[k].split(",")[0];
+            var item_R = scripts[k].split(",")[1];
+            var item_G = scripts[k].split(",")[2];
+            var item_B = scripts[k].split(",")[3];
+
+            if (item_rule.indexOf('>=') != -1){
+              var ix = item_rule.indexOf('>=');
+              var rule_num = item_rule.substr(ix+2);
+              for (var m = 0; m < item_names.length; m++){
+                if (parseFloat(item_names[m]) >= parseFloat(rule_num)){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+            else if (item_rule.indexOf('<=') != -1){
+              var ix = item_rule.indexOf('<=');
+              var rule_num = item_rule.substr(ix+2);
+              for (var m = 0; m < item_names.length; m++){
+                if (parseFloat(item_names[m]) <= parseFloat(rule_num)){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+            else if (item_rule.indexOf('!=') != -1){
+              var ix = item_rule.indexOf('!=');
+              var rule_num = item_rule.substr(ix+2);
+              for (var m = 0; m < item_names.length; m++){
+                if (item_names[m] != rule_num){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+            else if (item_rule.indexOf('>') != -1){
+              var ix = item_rule.indexOf('>');
+              var rule_num = item_rule.substr(ix+1);
+              for (var m = 0; m < item_names.length; m++){
+                if (parseFloat(item_names[m]) > parseFloat(rule_num)){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+            else if (item_rule.indexOf('<') != -1){
+              var ix = item_rule.indexOf('<');
+              var rule_num = item_rule.substr(ix+1);
+              for (var m = 0; m < item_names.length; m++){
+                if (parseFloat(item_names[m]) < parseFloat(rule_num)){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+            else if (item_rule.indexOf('=') != -1){
+              var ix = item_rule.indexOf('=');
+              var rule_num = item_rule.substr(ix+1);
+              for (var m = 0; m < item_names.length; m++){
+                if (item_names[m] == rule_num){
+                  item_num += parseFloat(item_nums[m]);
+                }
+              }
+            }
+
+            pic_xItem.push(item_rule);
+            pic_yItem.push(item_num);
+            color_list.push("rgb(" + item_R + "," + item_G + "," + item_B + ")");
+          }
+        }
+        
+        showStatisticChart(statistic_Chart, pic_xItem, pic_yItem, color_list);
+      }
+
+      function getStyleDescriber(){
+        var layers = Layers.value;
+        var style_type = S_tyles.value;
+        var style_desrciber = "";
+        if (style_type == "single"){
+          if (layers == "point" || layers == "line"){
+            var s_Color = cp.data('color');
+            var width = Width.value;
+            style_desrciber = style_type + "-" + s_Color._r + ',' + s_Color._g + ',' + s_Color._b + ',' +  s_Color._a + ',' + width;
+          }
+          else{
+            var e_Color = edge_cp.data('color');
+            var f_Color = fill_cp.data('color');
+            var width = P_Width.value;
+            var e_style = e_Color._r + ',' + e_Color._g + ',' + e_Color._b + ',' + e_Color._a + ',' + width;
+            var f_style = f_Color._r + ',' + f_Color._g + ',' + f_Color._b + ',' + f_Color._a;
+            style_desrciber = style_type + "-" + e_style + ',' + f_style;
+          }
+        }
+        else{
+          if (Scripts.value.length == 0){
+            alert("please input style scripts !");
+          }
+          else{
+            
+            var opts = fields.options;
+            if (style_type == "classified"){
+              showFieldStatistic(Attri);
+              for (var i = 0; i < opts.length; i++){
+                var field_info = opts[i].value.split("-");
+                var field_value = field_info[0];
+                var field_type = field_info[1];
+                field_value = field_value.replace(/\s*/g,"");
+                if (field_value == Attri.value){
+                  break;
+                }
+              }
+
+              style_desrciber += style_type + "-" + Attri.value + "-" + field_type;
+            }
+            else if (style_type == "ruled"){
+              showFieldStatistic(Attri3);
+              for (var i = 0; i < opts.length; i++){
+                var field_info = opts[i].value.split("-");
+                var field_value = field_info[0];
+                var field_type = field_info[1];
+                field_value = field_value.replace(/\s*/g,"");
+                if (field_value == Attri3.value){
+                  break;
+                }
+              }
+              style_desrciber += style_type + "-" + Attri3.value + "-" + field_type;
+            }
+
+            var arr = Scripts.value.split("\n");
+            for (var i = 0; i < arr.length; i++){
+              style_desrciber += ("-" + arr[i]);
+            }
+          }
+        }
+        return style_desrciber;
+      }
+
+      function getHeatTile(){
+        var style_type = S_tyles.value;
+        var radius = Radius.value;
+        var gradient = Gradient.value;
+        var layers = Layers.value;
+
+        heat_desrciber = style_type + "-" + gradient + "-" + radius;
+        var tiles = new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            tileUrlFunction: function(tileCoord){
+              var z = tileCoord[0];
+              var x = tileCoord[1];
+              var y = tileCoord[2];
+              var tile_resolution = L / Math.pow(2, z-1);
+              extent = map.getView().calculateExtent(map.getSize());
+              var minX = extent[0];
+              var minY = extent[1];
+              var maxX = extent[2];
+              var maxY = extent[3];
+              var tile_minX = Math.floor((minX + L) / tile_resolution);
+              var tile_maxX = Math.floor((maxX + L) / tile_resolution);
+              var tile_minY = Math.floor((L - maxY) / tile_resolution);
+              var tile_maxY = Math.floor((L - minY) / tile_resolution);
+              var style_desrciber = heat_desrciber + ("-" + tile_minX + "," + tile_maxX + "," + tile_minY + "," + tile_maxY);
+
+              return 'http://127.0.0.1:10085/HiVQ/' + layers + '/' + style_desrciber + '/' + z + '/' + x + '/' + y + '.png';
+            }
+          })
+        })
+        return tiles;
+      }
+
+      function ifOverlap(z, x, y, box_xMin, box_yMin, box_xMax, box_yMax){
+        var L = 20037508.34;
+        var tile_Rz = L / Math.pow(2, z-1);
+				var tile_xMin = x * tile_Rz - L;
+				var tile_xMax = (x + 1) * tile_Rz - L;
+				var tile_yMin = L - (y + 1) * tile_Rz;
+				var tile_yMax = L - y * tile_Rz;
+        if (box_xMin < tile_xMax && box_xMax > tile_xMin && box_yMin < tile_yMax && box_yMax > tile_yMin){
+          return true;
+        }
+        else{
+          return false;
+        }
+      }
+
+
+      function sendUrl(url){
+        var xhr = new XMLHttpRequest();
+        xhr.open("get", url, false);
+        xhr.send(null);
+        var info = xhr.responseText;
+        return info; 
+      }
+
+      function showStatisticChart(statistic_chart, xItem, yItem, colorList){
+        statistic_chart.resize();
+        var count_name = '';
+        if (Layers.value == "point"){
+          count_name = "Number";
+        }
+        else if (Layers.value == "line"){
+          count_name = "Length";
+        }
+        else if (Layers.value == "polygon"){
+          count_name = "Area";
+        }
+
+
+        var statistic_option = {
+            // title: {
+            //     text: 'ECharts 入门示例'
+            // },
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: {
+                type: 'shadow'
+              }
+            },
+            // legend: {
+            //     data:['销量']
+            // },
+            toolbox: {},
+            xAxis: {
+              boundaryGap: true,
+              axisLabel: {
+                // interval: 2,
+                // rotate: 15,
+                formatter: function (value, index) {
+                  if (index % 3 == 0) {
+                    value = value;
+                  } else{
+                    value = "";
+                  }
+                  return value;
+                },
+                textStyle: {
+                  fontSize: "15",
+                },
+              }
+            },
+            yAxis: {
+              type: 'category',
+              axisTick: {alignWithLabel: true},
+              data: xItem,
+              axisLabel: {
+                textStyle: {
+                  fontSize: "15"
+                }
+              }
+            },
+            series: [{
+                name: count_name,
+                type: 'bar',
+                data: yItem,
+                itemStyle: {
+                  color: function(params) {
+                    var index = params.dataIndex % colorList.length;
+                    return colorList[index];      
+                  }
+                }
+            }],
+            grid:{
+              left: '2%',
+              right: '2%',
+              bottom: '2%',
+              top: '2%',
+              containLabel: true
+            }
+        };
+        statistic_chart.setOption(statistic_option);
+      }
+
+
+      function calRuleTimeList(rule_name, item_dict){
+        var rule_yItem = [];
+
+        for ([item_key, item_countList] of Object.entries(item_dict)){
+          if (rule_name.indexOf('>=') != -1){
+            var ix = rule_name.indexOf('>=');
+            var rule_num = rule_name.substr(ix+2);
+            if (parseFloat(item_key) >= parseFloat(rule_num)){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+          else if (rule_name.indexOf('<=') != -1){
+            var ix = rule_name.indexOf('<=');
+            var rule_num = rule_name.substr(ix+2);
+            if (parseFloat(item_key) <= parseFloat(rule_num)){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+          else if (rule_name.indexOf('!=') != -1){
+            var ix = rule_name.indexOf('!=');
+            var rule_num = rule_name.substr(ix+2);
+            if (item_key != rule_num){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+          else if (rule_name.indexOf('>') != -1){
+            var ix = rule_name.indexOf('>');
+            var rule_num = rule_name.substr(ix+1);
+            if (parseFloat(item_key) > parseFloat(rule_num)){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+          else if (rule_name.indexOf('<') != -1){
+            var ix = rule_name.indexOf('<');
+            var rule_num = rule_name.substr(ix+1);
+            if (parseFloat(item_key) <= parseFloat(rule_num)){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+          else if (rule_name.indexOf('=') != -1){
+            var ix = rule_name.indexOf('=');
+            var rule_num = rule_name.substr(ix+1);
+            if (item_key == rule_num){
+              if (rule_yItem.length == 0){
+                rule_yItem = item_countList;
+              }
+              else{
+                for (var i = 0; i < rule_yItem.length; i++){
+                  rule_yItem[i] += item_countList[i];
+                }
+              }
+            }
+          }
+        }
+
+        return rule_yItem;
+      }
+
+    </script>
+  </body>
+</html>
+
